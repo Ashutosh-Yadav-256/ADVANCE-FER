@@ -1,0 +1,15 @@
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python
+mediapipe
+numpy
+pandas
+scikit-learn
+albumentations
+streamlit
+onnx
+onnxruntime
+matplotlib
+Pillow
+tqdm
+kagglehub
