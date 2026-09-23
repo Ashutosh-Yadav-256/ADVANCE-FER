@@ -1,111 +1,155 @@
-import torch
-import numpy as np
+"""
+Production Inference Pipeline for ADVANCE-FER.
+Combines MediaPipe Face Mesh, Canonical Alignment, and SOTA ONNX Emotion Engine.
+"""
+
 import cv2
-from models.fer_model import FERModel
+import numpy as np
+import time
+import logging
+from typing import Dict, List, Tuple, Any, Optional
+
 from preprocessing.face_detector import FaceDetector
 from preprocessing.alignment import FaceAligner
-from utils.grad_cam import GradCAM
-import torchvision.transforms as transforms
-from PIL import Image
+from models.emotion_engine import EmotionEngine
+
+logger = logging.getLogger(__name__)
+
+# Emotion badge color scheme (BGR format)
+EMOTION_COLORS = {
+    'happy': (46, 204, 113),     # Green
+    'surprise': (52, 152, 219),  # Light Blue
+    'neutral': (149, 165, 166),  # Gray
+    'sad': (155, 89, 182),       # Purple
+    'fear': (241, 196, 15),      # Yellow
+    'angry': (41, 128, 185),     # Dark Red/Orange
+    'disgust': (39, 174, 96)     # Emerald
+}
+
 
 class InferenceEngine:
     """
-    Handles model loading and inference.
+    Production-ready inference pipeline for real-time video streams and images.
     """
-    def __init__(self, model_path=None, device='cpu'):
-        self.device = torch.device(device)
-        self.model = FERModel(num_classes=7).to(self.device)
-        self.model.eval()
-        
-        if model_path:
-            try:
-                self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-                print(f"Loaded model from {model_path}")
-            except FileNotFoundError:
-                print(f"Model file {model_path} not found. Using random weights.")
-        else:
-            print("No model path provided. Using random weights.")
-
-        self.detector = FaceDetector()
+    def __init__(
+        self,
+        model_path: Optional[str] = None,
+        max_num_faces: int = 4,
+        confidence_threshold: float = 0.4
+    ):
+        self.detector = FaceDetector(max_num_faces=max_num_faces)
         self.aligner = FaceAligner()
-        
-        # Grad-CAM
-        # Target layer for ResNet50 is layer4[-1]
-        # But we wrapped it in FeatureExtractor.backbone
-        # So it is model.visual_extractor.backbone.layer4[-1]
-        target_layer = self.model.visual_extractor.backbone.layer4[-1]
-        self.grad_cam = GradCAM(self.model, target_layer)
-        
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-        
-        self.emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+        self.emotion_engine = EmotionEngine(model_path=model_path)
+        self.confidence_threshold = confidence_threshold
+        logger.info("InferenceEngine initialized with SOTA ONNX backend.")
 
-    def predict(self, frame):
+    def process_frame(self, frame: np.ndarray) -> Tuple[List[Dict[str, Any]], float]:
         """
-        Run inference on a frame.
+        Detects faces and predicts emotions without drawing overlays.
+
+        Args:
+            frame: Input BGR image.
+
         Returns:
-            annotated_frame: Frame with bounding boxes and emotion labels.
+            Tuple of (face_results, latency_ms).
         """
-        results = self.detector.process(frame)
-        if not results.multi_face_landmarks:
+        t0 = time.perf_counter()
+        if frame is None or frame.size == 0:
+            return [], 0.0
+
+        faces = self.detector.extract_faces(frame)
+        if not faces:
+            latency_ms = (time.perf_counter() - t0) * 1000.0
+            return [], latency_ms
+
+        aligned_faces = []
+        for face in faces:
+            aligned = self.aligner.align(frame, face["landmarks"])
+            aligned_faces.append(aligned)
+
+        # High-throughput batch inference
+        predictions = self.emotion_engine.predict_batch(aligned_faces)
+
+        results = []
+        for face, pred in zip(faces, predictions):
+            x, y, w, h = face["bbox"]
+            results.append({
+                "face_idx": face["face_idx"],
+                "bbox": [x, y, w, h],
+                "dominant_emotion": pred["dominant_emotion"],
+                "confidence": pred["confidence"],
+                "probabilities": pred["probabilities"],
+                "valence": pred["valence"],
+                "arousal": pred["arousal"]
+            })
+
+        latency_ms = (time.perf_counter() - t0) * 1000.0
+        return results, latency_ms
+
+    def predict(
+        self,
+        frame: np.ndarray,
+        draw_landmarks: bool = False,
+        show_metrics: bool = True
+    ) -> np.ndarray:
+        """
+        Processes a frame and returns an annotated image with emotion tags and bounding boxes.
+        Compatible with the existing Streamlit app and OpenCV video loop.
+
+        Args:
+            frame: Input BGR image.
+            draw_landmarks: Whether to draw full facial mesh contours.
+            show_metrics: Whether to display FPS / latency tag.
+
+        Returns:
+            Annotated BGR frame.
+        """
+        if frame is None or frame.size == 0:
             return frame
-            
+
         annotated_frame = frame.copy()
-        h, w, _ = frame.shape
-        
-        for face_landmarks in results.multi_face_landmarks:
-            # 1. Get Landmarks
-            landmarks_np = self.detector.get_landmarks(results, (h, w))
-            
-            # 2. Align Face
-            aligned_face = self.aligner.align(frame, landmarks_np)
-            
-            # 3. Preprocess for Model
-            # Convert to PIL for transforms
-            aligned_pil = Image.fromarray(cv2.cvtColor(aligned_face, cv2.COLOR_BGR2RGB))
-            input_tensor = self.transform(aligned_pil).unsqueeze(0).to(self.device)
-            
-            # Landmarks tensor
-            landmarks_tensor = torch.tensor(landmarks_np, dtype=torch.float32).unsqueeze(0).to(self.device)
-            
-            # 4. Inference
-            with torch.no_grad():
-                logits, va = self.model(input_tensor, landmarks_tensor)
-                probs = torch.softmax(logits, dim=1)
-                pred_idx = torch.argmax(probs, dim=1).item()
-                emotion = self.emotions[pred_idx]
-                conf = probs[0, pred_idx].item()
-                
-            # 5. Explainability (Grad-CAM)
-            # We need gradients, so we can't use no_grad for this part if we want backprop
-            # But GradCAM handles zero_grad and backward internally.
-            # However, we need to enable grad for the input/model temporarily if we were in no_grad mode globally.
-            # Since we are in eval mode, we can still compute gradients if requires_grad is True.
-            # But standard inference usually doesn't need it.
-            # For demo, let's compute it.
-            heatmap = self.grad_cam(input_tensor, landmarks_tensor, pred_idx)
-            
-            # Overlay heatmap on the aligned face (just for visualization)
-            # In the main frame, we might just show the label.
-            # Or we can draw a mini-map.
-            
-            # Draw bounding box (approximate from landmarks)
-            x_min = int(np.min(landmarks_np[:, 0]))
-            y_min = int(np.min(landmarks_np[:, 1]))
-            x_max = int(np.max(landmarks_np[:, 0]))
-            y_max = int(np.max(landmarks_np[:, 1]))
-            
-            cv2.rectangle(annotated_frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-            cv2.putText(annotated_frame, f"{emotion} ({conf:.2f})", (x_min, y_min - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-                        
-            # Visualize Valence/Arousal
-            val, aro = va[0].tolist()
-            cv2.putText(annotated_frame, f"V:{val:.2f} A:{aro:.2f}", (x_min, y_max + 20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+        face_results, latency_ms = self.process_frame(frame)
+
+        if draw_landmarks:
+            mesh_results = self.detector.process(frame)
+            if mesh_results:
+                annotated_frame = self.detector.draw_landmarks(annotated_frame, mesh_results)
+
+        # Draw overlays for each face
+        for face in face_results:
+            x, y, w, h = face["bbox"]
+            emotion = face["dominant_emotion"]
+            conf = face["confidence"]
+            val = face["valence"]
+            aro = face["arousal"]
+
+            color = EMOTION_COLORS.get(emotion.lower(), (0, 255, 0))
+
+            # Bounding box
+            cv2.rectangle(annotated_frame, (x, y), (x + w, y + h), color, 2)
+
+            # Label banner
+            label = f"{emotion.capitalize()} ({conf*100:.0f}%)"
+            val_aro_label = f"V:{val:+.2f} A:{aro:+.2f}"
+
+            # Calculate text size for background badge
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            thickness = 2
+            (text_w, text_h), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+
+            badge_y1 = max(0, y - text_h - 10)
+            badge_y2 = y
+            cv2.rectangle(annotated_frame, (x, badge_y1), (x + text_w + 10, badge_y2), color, -1)
+            cv2.putText(annotated_frame, label, (x + 5, y - 5), font, font_scale, (255, 255, 255), thickness, cv2.LINE_AA)
+
+            # Valence & Arousal indicator below box
+            va_y = min(annotated_frame.shape[0] - 5, y + h + 18)
+            cv2.putText(annotated_frame, val_aro_label, (x, va_y), font, 0.5, color, 1, cv2.LINE_AA)
+
+        if show_metrics and latency_ms > 0:
+            fps = 1000.0 / latency_ms
+            metrics_text = f"Latency: {latency_ms:.1f}ms | FPS: {fps:.1f} | Faces: {len(face_results)}"
+            cv2.putText(annotated_frame, metrics_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
 
         return annotated_frame

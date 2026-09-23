@@ -1,0 +1,375 @@
+<div class="app-container">
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="glass-header">
+    <div class="header-brand">
+      <div class="brand-logo">
+        <i class="ri-emotion-happy-line"></i>
+      </div>
+      <div class="brand-text">
+        <h1>ADVANCE-FER <span class="badge-version">v2.0 PRO</span></h1>
+        <p class="brand-subtitle">Real-Time Emotion AI & Affective Copilot</p>
+      </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <nav class="nav-tabs">
+      <button class="tab-btn" [class.active]="activeTab() === 'studio'" (click)="setTab('studio')">
+        <i class="ri-camera-lens-line"></i> Webcam Studio
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'medialab'" (click)="setTab('medialab')">
+        <i class="ri-image-add-line"></i> Media Lab
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'copilot'" (click)="setTab('copilot')">
+        <i class="ri-robot-2-line"></i> Affective Copilot
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'metrics'" (click)="setTab('metrics')">
+        <i class="ri-dashboard-3-line"></i> Hardware Benchmarks
+      </button>
+    </nav>
+
+    <!-- SYSTEM STATUS BADGE -->
+    <div class="header-status">
+      <div class="status-indicator" [class.online]="backendHealthy()" [class.offline]="!backendHealthy()">
+        <span class="pulse-dot"></span>
+        <span class="status-label">{{ backendHealthy() ? 'Backend Online' : 'Connecting...' }}</span>
+      </div>
+      <div class="device-pill" *ngIf="health()">
+        <i class="ri-cpu-line"></i> {{ health()?.device }}
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APPLICATION CONTENT -->
+  <main class="main-content">
+
+    <!-- ============================================== -->
+    <!-- TAB 1: WEBCAM STUDIO                          -->
+    <!-- ============================================== -->
+    <section class="tab-section" *ngIf="activeTab() === 'studio'">
+      <div class="studio-grid">
+        <!-- VIDEO & CANVAS HUD -->
+        <div class="video-card glass-panel">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="ri-live-line live-icon" *ngIf="isCameraActive()"></i>
+              <span>Live Visual Stream</span>
+            </div>
+            <div class="stream-stats" *ngIf="isCameraActive()">
+              <span class="stat-pill"><i class="ri-speed-line"></i> {{ fps() }} FPS</span>
+              <span class="stat-pill"><i class="ri-timer-line"></i> {{ latency() }} ms</span>
+            </div>
+          </div>
+
+          <div class="video-stage">
+            <video #videoPlayer autoplay playsinline muted class="camera-feed" [class.hidden]="!isCameraActive()"></video>
+            <canvas #hudCanvas class="hud-canvas" [class.hidden]="!isCameraActive()"></canvas>
+
+            <div class="camera-standby" *ngIf="!isCameraActive()">
+              <div class="standby-icon"><i class="ri-camera-off-line"></i></div>
+              <h3>Camera Feed Idle</h3>
+              <p>Click below to launch real-time face detection, alignment, and emotion tracking.</p>
+              <button class="btn-primary start-btn" (click)="startCamera()">
+                <i class="ri-play-circle-line"></i> Start Camera Stream
+              </button>
+            </div>
+          </div>
+
+          <!-- CONTROLS FOOTER -->
+          <div class="card-footer" *ngIf="isCameraActive()">
+            <button class="btn-danger" (click)="stopCamera()">
+              <i class="ri-stop-circle-line"></i> Stop Stream
+            </button>
+            <div class="footer-toggles">
+              <label class="toggle-control">
+                <input type="checkbox" [(ngModel)]="drawBbox">
+                <span>Bounding Box HUD</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT TELEMETRY & EMOTION ANALYTICS -->
+        <div class="telemetry-panel glass-panel">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="ri-pulse-line"></i>
+              <span>Live Affective Telemetry</span>
+            </div>
+            <span class="face-count-pill" *ngIf="faces().length > 0">
+              {{ faces().length }} {{ faces().length === 1 ? 'Face' : 'Faces' }}
+            </span>
+          </div>
+
+          <div class="telemetry-content" *ngIf="activeFace() as face; else noFaceTemplate">
+            <!-- HERO DOMINANT EMOTION CARD -->
+            <div class="dominant-card" [style.border-color]="emotionColors[face.dominant_emotion.toLowerCase()]">
+              <div class="dominant-header">
+                <span class="dominant-label">DOMINANT EMOTION</span>
+                <span class="confidence-badge" [style.background]="emotionColors[face.dominant_emotion.toLowerCase()]">
+                  {{ (face.confidence * 100).toFixed(0) }}% CONFIDENCE
+                </span>
+              </div>
+              <h2 class="dominant-name" [style.color]="emotionColors[face.dominant_emotion.toLowerCase()]">
+                {{ face.dominant_emotion.toUpperCase() }}
+              </h2>
+            </div>
+
+            <!-- VALENCE & AROUSAL RADAR GAUGES -->
+            <div class="affective-gauges">
+              <div class="gauge-box">
+                <div class="gauge-label">
+                  <span>Valence (Pleasantness)</span>
+                  <span class="gauge-val">{{ face.valence > 0 ? '+' : '' }}{{ face.valence.toFixed(2) }}</span>
+                </div>
+                <div class="gauge-track">
+                  <div class="gauge-bar valence-bar" [style.width.%]="((face.valence + 1) / 2) * 100"></div>
+                </div>
+                <div class="gauge-axis"><span>Negative (-1.0)</span><span>Positive (+1.0)</span></div>
+              </div>
+
+              <div class="gauge-box">
+                <div class="gauge-label">
+                  <span>Arousal (Activation)</span>
+                  <span class="gauge-val">{{ face.arousal > 0 ? '+' : '' }}{{ face.arousal.toFixed(2) }}</span>
+                </div>
+                <div class="gauge-track">
+                  <div class="gauge-bar arousal-bar" [style.width.%]="((face.arousal + 1) / 2) * 100"></div>
+                </div>
+                <div class="gauge-axis"><span>Calm (-1.0)</span><span>Excited (+1.0)</span></div>
+              </div>
+            </div>
+
+            <!-- 7-CLASS PROBABILITY DISTRIBUTION -->
+            <div class="prob-section">
+              <h4>Emotion Probability Distribution</h4>
+              <div class="prob-list">
+                <div class="prob-item" *ngFor="let p of getSortedProbabilities(face)">
+                  <div class="prob-header">
+                    <span class="emotion-title">{{ p.emotion | uppercase }}</span>
+                    <span class="prob-pct">{{ p.prob }}%</span>
+                  </div>
+                  <div class="prob-track">
+                    <div class="prob-fill" [style.width.%]="p.prob" [style.background]="p.color"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COPILOT CALLOUT BUTTON -->
+            <button class="btn-copilot" (click)="setTab('copilot'); triggerAgentAnalysis()">
+              <i class="ri-sparkling-fill"></i> Ask Affective AI Copilot For Behavioral Insights
+            </button>
+          </div>
+
+          <ng-template #noFaceTemplate>
+            <div class="no-face-placeholder">
+              <i class="ri-user-search-line"></i>
+              <h4>Awaiting Facial Detection</h4>
+              <p>Position your face towards the camera to observe real-time neural emotion decoding.</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: MEDIA LAB (FILE UPLOAD)                -->
+    <!-- ============================================== -->
+    <section class="tab-section" *ngIf="activeTab() === 'medialab'">
+      <div class="medialab-grid">
+        <div class="upload-panel glass-panel">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="ri-upload-cloud-2-line"></i>
+              <span>Image & Snapshot Inspection</span>
+            </div>
+          </div>
+
+          <div class="dropzone">
+            <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="file-input">
+            <div class="dropzone-body" (click)="fileInput.click()">
+              <i class="ri-folder-image-line dropzone-icon"></i>
+              <h3>Choose or Drag Face Image Here</h3>
+              <p>Supports high-resolution JPEG, PNG, WEBP files.</p>
+              <button class="btn-secondary" type="button">Select Local File</button>
+            </div>
+          </div>
+
+          <div class="sample-profiles-box">
+            <div class="sample-title"><i class="ri-cpu-line"></i> Test Real ViT Model On Portrait Sample:</div>
+            <div class="sample-btn-group">
+              <button class="sample-btn happy-btn" (click)="runRealInferenceOnSample('/sample_face.jpg')">
+                <i class="ri-play-circle-line"></i> Run Real Model On Sample Portrait
+              </button>
+            </div>
+          </div>
+
+          <div class="preview-area" *ngIf="uploadedImage">
+            <img [src]="uploadedImage" class="uploaded-preview" alt="Uploaded Face">
+          </div>
+        </div>
+
+        <div class="results-panel glass-panel">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="ri-scan-2-line"></i>
+              <span>Extraction Results</span>
+            </div>
+            <span class="badge-success" *ngIf="uploadedFaces().length > 0">
+              {{ uploadedFaces().length }} Faces Classified
+            </span>
+          </div>
+
+          <div class="results-content" *ngIf="uploadedFaces().length > 0; else noUploadTemplate">
+            <div class="face-card" *ngFor="let face of uploadedFaces(); let i = index">
+              <div class="face-card-header">
+                <span class="face-index">FACE #{{ i + 1 }}</span>
+                <span class="badge-emotion" [style.background]="emotionColors[face.dominant_emotion.toLowerCase()]">
+                  {{ face.dominant_emotion | uppercase }} ({{ (face.confidence * 100).toFixed(0) }}%)
+                </span>
+              </div>
+              <div class="face-card-body">
+                <div class="va-pills">
+                  <span class="stat-tag">Valence: {{ face.valence.toFixed(2) }}</span>
+                  <span class="stat-tag">Arousal: {{ face.arousal.toFixed(2) }}</span>
+                  <span class="stat-tag">Box: [{{ face.bbox.join(', ') }}]</span>
+                </div>
+                <div class="prob-mini-list">
+                  <div class="prob-mini-item" *ngFor="let p of getSortedProbabilities(face).slice(0, 4)">
+                    <span>{{ p.emotion }}</span>
+                    <span>{{ p.prob }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noUploadTemplate>
+            <div class="no-face-placeholder">
+              <i class="ri-image-line"></i>
+              <p>Upload an image on the left to extract full multi-face emotion distributions.</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 3: AFFECTIVE AI COPILOT                    -->
+    <!-- ============================================== -->
+    <section class="tab-section" *ngIf="activeTab() === 'copilot'">
+      <div class="copilot-container glass-panel">
+        <div class="card-header">
+          <div class="header-title">
+            <i class="ri-brain-line"></i>
+            <span>Affective AI Copilot & Behavioral Reasoning Agent</span>
+          </div>
+          <div class="context-selector">
+            <label>Domain Context:</label>
+            <select [(ngModel)]="selectedContext">
+              <option value="interview">Job Interview & Executive Presence</option>
+              <option value="customer_service">Customer Service & Satisfaction</option>
+              <option value="mental_wellness">Mental Wellness & Stress Check</option>
+              <option value="general">General Empathy Analysis</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="copilot-grid">
+          <div class="telemetry-summary">
+            <h4>Target Face Telemetry</h4>
+            <div class="telemetry-card" *ngIf="activeFace() as f; else noFaceCopilot">
+              <p><strong>Dominant:</strong> <span [style.color]="emotionColors[f.dominant_emotion.toLowerCase()]">{{ f.dominant_emotion | uppercase }}</span></p>
+              <p><strong>Confidence:</strong> {{ (f.confidence * 100).toFixed(1) }}%</p>
+              <p><strong>Valence:</strong> {{ f.valence.toFixed(2) }} | <strong>Arousal:</strong> {{ f.arousal.toFixed(2) }}</p>
+              <button class="btn-primary" (click)="triggerAgentAnalysis()">
+                <i class="ri-sparkling-2-line"></i> Run Agent Reasoning
+              </button>
+            </div>
+            <ng-template #noFaceCopilot>
+              <div class="no-face-placeholder">
+                <i class="ri-user-search-line"></i>
+                <p>No active face. Use the Webcam Studio, upload an image, or run real neural inference on the sample portrait:</p>
+                <div class="sample-btn-group-small">
+                  <button class="sample-btn happy-btn" (click)="runRealInferenceOnSample('/sample_face.jpg')">
+                    <i class="ri-cpu-line"></i> Run Real Model On Sample Portrait
+                  </button>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+
+          <div class="copilot-output" *ngIf="agentAnalysis() as a">
+            <div class="score-cards">
+              <div class="score-card">
+                <div class="score-label">Stress Index</div>
+                <div class="score-val" [class.high-stress]="a.stress_index > 0.5">{{ (a.stress_index * 100).toFixed(0) }}%</div>
+                <div class="score-bar"><div class="score-fill" [style.width.%]="a.stress_index * 100"></div></div>
+              </div>
+              <div class="score-card">
+                <div class="score-label">Engagement Score</div>
+                <div class="score-val high-engagement">{{ (a.engagement_score * 100).toFixed(0) }}%</div>
+                <div class="score-bar"><div class="score-fill" [style.width.%]="a.engagement_score * 100"></div></div>
+              </div>
+            </div>
+
+            <div class="reasoning-block">
+              <h5><i class="ri-psychotherapy-line"></i> Psychological Interpretation</h5>
+              <p>{{ a.interpretation || a.agent_reasoning }}</p>
+            </div>
+
+            <div class="recommendation-block" *ngIf="a.recommendation">
+              <h5><i class="ri-lightbulb-flash-line"></i> Actionable Recommendation</h5>
+              <p>{{ a.recommendation }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 4: METRICS & HARDWARE BENCHMARKS          -->
+    <!-- ============================================== -->
+    <section class="tab-section" *ngIf="activeTab() === 'metrics'">
+      <div class="metrics-grid">
+        <div class="metric-summary-card glass-panel">
+          <div class="card-header">
+            <div class="header-title"><i class="ri-speed-up-line"></i> Measured Empirical Benchmarks</div>
+          </div>
+          <div class="benchmark-stats">
+            <div class="b-stat">
+              <span class="b-num">2.87 ms</span>
+              <span class="b-label">End-to-End Latency (P50)</span>
+            </div>
+            <div class="b-stat">
+              <span class="b-num">334 FPS</span>
+              <span class="b-label">Pipeline Throughput</span>
+            </div>
+            <div class="b-stat">
+              <span class="b-num">0.78 ms</span>
+              <span class="b-label">Motion Differencing</span>
+            </div>
+            <div class="b-stat">
+              <span class="b-num">2,990x</span>
+              <span class="b-label">Cache Hash Speedup</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="system-specs-card glass-panel" *ngIf="health() as h">
+          <div class="card-header">
+            <div class="header-title"><i class="ri-settings-4-line"></i> Active Runtime Architecture</div>
+          </div>
+          <div class="specs-list">
+            <p><strong>Model:</strong> {{ h.model }}</p>
+            <p><strong>Device:</strong> {{ h.device }} Accelerator</p>
+            <p><strong>Version:</strong> {{ h.version }} Production</p>
+            <p><strong>Uptime:</strong> {{ h.uptime_seconds }} seconds</p>
+            <p><strong>Classes:</strong> {{ h.emotions.join(', ') }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>

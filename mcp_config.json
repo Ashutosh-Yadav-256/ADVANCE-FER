@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "advance-fer": {
+      "command": "python",
+      "args": [
+        "c:/Desktop/CODING _IS_LIFE/1 ANTI GRAVITY/TASKMANGER/ADVANCE-FER/mcp_server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

@@ -1,13 +1,32 @@
+"""
+Robust Face Detection and Landmark Extraction module using MediaPipe FaceMesh.
+Provides multi-face support, bounding box calculation, and normalized landmark coordinate handling.
+"""
+
+# Protobuf / MediaPipe compatibility patch for protobuf >= 3.20 on Python 3.12
+import google.protobuf.message_factory as _mf
+from google.protobuf import symbol_database as _sym_db
+if not hasattr(_mf, 'GetMessageClass'):
+    _mf.GetMessageClass = lambda descriptor: _sym_db.Default().GetPrototype(descriptor)
+
 import cv2
 import mediapipe as mp
 import numpy as np
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict, Any
+
 
 class FaceDetector:
     """
-    Wrapper around MediaPipe Face Mesh for robust face detection and landmark extraction.
+    Production wrapper around MediaPipe Face Mesh.
+    Supports multi-face detection, bounding box extraction, and landmark extraction.
     """
-    def __init__(self, max_num_faces: int = 1, min_detection_confidence: float = 0.5, min_tracking_confidence: float = 0.5):
+    def __init__(
+        self,
+        max_num_faces: int = 4,
+        min_detection_confidence: float = 0.5,
+        min_tracking_confidence: float = 0.5
+    ):
+        self.max_num_faces = max_num_faces
         self.mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = self.mp_face_mesh.FaceMesh(
             max_num_faces=max_num_faces,
@@ -18,49 +37,123 @@ class FaceDetector:
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
 
-    def process(self, image: np.ndarray) -> Optional[object]:
+    def process(self, image: np.ndarray) -> Optional[Any]:
         """
-        Process an image to find faces and landmarks.
+        Process an image with MediaPipe Face Mesh.
         Args:
-            image: Input image in BGR format (OpenCV default).
+            image: Input image in BGR format.
         Returns:
-            MediaPipe FaceMesh results object or None if no face found.
+            MediaPipe FaceMesh results object or None.
         """
-        # Convert the BGR image to RGB before processing.
+        if image is None or image.size == 0:
+            return None
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = self.face_mesh.process(image_rgb)
-        return results
+        return self.face_mesh.process(image_rgb)
 
-    def get_landmarks(self, results, image_shape: Tuple[int, int]) -> Optional[np.ndarray]:
+    def get_landmarks(
+        self,
+        results: Any,
+        image_shape: Tuple[int, int],
+        face_idx: int = 0
+    ) -> Optional[np.ndarray]:
         """
-        Extract 468 landmarks from the results.
+        Extract 478 landmarks for a specific face index.
         Args:
             results: MediaPipe results object.
             image_shape: (height, width) of the image.
+            face_idx: Index of the face to extract (defaults to 0).
         Returns:
-            Numpy array of shape (478, 3) containing (x, y, z) coordinates.
-            Note: MediaPipe returns 478 landmarks with refine_landmarks=True (includes iris).
+            Numpy array of shape (478, 3) with (x, y, z) coordinates in pixels, or None.
         """
-        if not results.multi_face_landmarks:
+        if not results or not results.multi_face_landmarks:
             return None
-        
-        # Assume single face for now
-        face_landmarks = results.multi_face_landmarks[0]
-        h, w = image_shape
-        
+
+        if face_idx >= len(results.multi_face_landmarks):
+            return None
+
+        face_landmarks = results.multi_face_landmarks[face_idx]
+        h, w = image_shape[:2]
+
         landmarks = []
         for lm in face_landmarks.landmark:
             landmarks.append([lm.x * w, lm.y * h, lm.z])
-            
-        return np.array(landmarks)
 
-    def draw_landmarks(self, image: np.ndarray, results) -> np.ndarray:
+        return np.array(landmarks, dtype=np.float32)
+
+    def get_bbox(
+        self,
+        landmarks: np.ndarray,
+        image_shape: Tuple[int, int],
+        padding: float = 0.2
+    ) -> Tuple[int, int, int, int]:
         """
-        Draw landmarks on the image.
+        Calculates face bounding box (x, y, w, h) from landmarks with padding.
         """
-        if not results.multi_face_landmarks:
+        h, w = image_shape[:2]
+        x_min = float(np.min(landmarks[:, 0]))
+        y_min = float(np.min(landmarks[:, 1]))
+        x_max = float(np.max(landmarks[:, 0]))
+        y_max = float(np.max(landmarks[:, 1]))
+
+        box_w = x_max - x_min
+        box_h = y_max - y_min
+
+        pad_x = box_w * padding
+        pad_y = box_h * padding
+
+        x1 = max(0, int(x_min - pad_x))
+        y1 = max(0, int(y_min - pad_y))
+        x2 = min(w, int(x_max + pad_x))
+        y2 = min(h, int(y_max + pad_y))
+
+        return x1, y1, max(1, x2 - x1), max(1, y2 - y1)
+
+    def extract_faces(self, image: np.ndarray) -> List[Dict[str, Any]]:
+        """
+        Detects all faces in the frame and returns rich structured metadata for each.
+
+        Returns:
+            List of dicts:
+                - face_idx: int
+                - bbox: (x, y, w, h)
+                - landmarks: np.ndarray (478, 3)
+                - face_crop: np.ndarray (BGR crop)
+        """
+        if image is None or image.size == 0:
+            return []
+
+        results = self.process(image)
+        if not results or not results.multi_face_landmarks:
+            return []
+
+        h, w = image.shape[:2]
+        faces = []
+
+        for idx, face_lms in enumerate(results.multi_face_landmarks):
+            landmarks = self.get_landmarks(results, (h, w), face_idx=idx)
+            if landmarks is None:
+                continue
+
+            x, y, bw, bh = self.get_bbox(landmarks, (h, w))
+            face_crop = image[y:y+bh, x:x+bw]
+
+            if face_crop.size == 0:
+                continue
+
+            faces.append({
+                "face_idx": idx,
+                "bbox": (x, y, bw, bh),
+                "landmarks": landmarks,
+                "face_crop": face_crop
+            })
+
+        return faces
+
+    def draw_landmarks(self, image: np.ndarray, results: Any) -> np.ndarray:
+        """Draws facial mesh landmarks on image copy."""
+        if not results or not results.multi_face_landmarks:
             return image
-            
+
         annotated_image = image.copy()
         for face_landmarks in results.multi_face_landmarks:
             self.mp_drawing.draw_landmarks(
@@ -68,12 +161,6 @@ class FaceDetector:
                 landmark_list=face_landmarks,
                 connections=self.mp_face_mesh.FACEMESH_TESSELATION,
                 landmark_drawing_spec=None,
-                connection_drawing_spec=self.mp_drawing_styles.get_default_face_mesh_tesselation_style())
-            self.mp_drawing.draw_landmarks(
-                image=annotated_image,
-                landmark_list=face_landmarks,
-                connections=self.mp_face_mesh.FACEMESH_CONTOURS,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=self.mp_drawing_styles.get_default_face_mesh_contours_style())
-                
+                connection_drawing_spec=self.mp_drawing_styles.get_default_face_mesh_tesselation_style()
+            )
         return annotated_image

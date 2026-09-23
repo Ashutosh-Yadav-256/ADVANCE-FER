@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: advance-fer-service
+  labels:
+    app: advance-fer-api
+spec:
+  type: ClusterIP
+  selector:
+    app: advance-fer-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+      name: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: advance-fer-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: advance-fer-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: advance-fer-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "15m"
+spec:
+  tls:
+    - hosts:
+        - fer.api.example.com
+      secretName: fer-api-tls
+  rules:
+    - host: fer.api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: advance-fer-service
+                port:
+                  number: 80

@@ -41,7 +41,12 @@ data/fer2013/
 models/*.pth
 models/*.pt
 models/*.onnx
+models/checkpoints/
 !models/.gitkeep
+
+# Databases
+*.db
+*.sqlite3
 
 # OS generated files
 .DS_Store
@@ -51,3 +56,9 @@ models/*.onnx
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+.pytest_cache/
