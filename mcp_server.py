@@ -4,6 +4,12 @@ Exposes real-time facial expression recognition, multi-face tracking, and affect
 as standard tools and resources for LLMs and AI Agents (Claude Desktop, Antigravity, Cursor).
 """
 
+# Protobuf / MediaPipe compatibility patch for protobuf >= 3.20 on Python 3.12
+import google.protobuf.message_factory as _mf
+from google.protobuf import symbol_database as _sym_db
+if not hasattr(_mf, 'GetMessageClass'):
+    _mf.GetMessageClass = lambda descriptor: _sym_db.Default().GetPrototype(descriptor)
+
 import os
 import sys
 import time
@@ -13,7 +19,14 @@ from typing import Dict, List, Any, Optional
 
 import cv2
 import numpy as np
-from mcp.server.fastmcp import FastMCP
+
+try:
+    from mcp.server.fastmcp import FastMCP
+except ImportError:
+    try:
+        from mcp.server.mcpserver import MCPServer as FastMCP
+    except ImportError:
+        FastMCP = None
 
 # Setup logging to stderr (stdio transport requires stdout reserved for JSON-RPC)
 logging.basicConfig(
@@ -24,7 +37,21 @@ logging.basicConfig(
 logger = logging.getLogger("advance_fer_mcp")
 
 # Initialize FastMCP Server
-mcp = FastMCP("ADVANCE-FER Emotion AI")
+if FastMCP:
+    mcp = FastMCP("ADVANCE-FER Emotion AI")
+else:
+    class _DummyMCP:
+        def tool(self):
+            return lambda fn: fn
+        def resource(self, *args, **kwargs):
+            return lambda fn: fn
+        @property
+        def _tool_manager(self):
+            class _DummyTM:
+                def list_tools(self):
+                    return []
+            return _DummyTM()
+    mcp = _DummyMCP()
 
 # Lazy-loaded singletons
 _engine = None

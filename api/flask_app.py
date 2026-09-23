@@ -4,6 +4,12 @@ Demonstrates multi-framework backend architecture, providing equivalent endpoint
 to the FastAPI gateway and integrating the AffectiveAgent and EmotionCache.
 """
 
+# Protobuf / MediaPipe compatibility patch for protobuf >= 3.20 on Python 3.12
+import google.protobuf.message_factory as _mf
+from google.protobuf import symbol_database as _sym_db
+if not hasattr(_mf, 'GetMessageClass'):
+    _mf.GetMessageClass = lambda descriptor: _sym_db.Default().GetPrototype(descriptor)
+
 import time
 import logging
 import cv2
