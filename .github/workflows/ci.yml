@@ -37,7 +37,7 @@ jobs:
       - name: Install Linux Media & Vision Libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0 curl
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0 curl
 
       - name: Install Python Dependencies
         run: |
