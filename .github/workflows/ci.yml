@@ -43,15 +43,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest ruff
+          pip install pytest pytest-asyncio ruff
 
       - name: Lint Code with Ruff
         run: |
           ruff check . --ignore E501,F401,F841 || true
 
-      - name: Execute Full Pytest Suite (26 Tests)
+      - name: Pre-cache ONNX Model Weights
         run: |
-          python -m pytest tests/ -v --durations=10
+          python -m models.weights_manager
+
+      - name: Execute Full Pytest Suite (26 Tests)
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m pytest tests/ -v -s --durations=10
 
   # =========================================================================
   # JOB 2: Build & Deploy Frontend to GitHub Pages
