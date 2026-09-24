@@ -1,6 +1,6 @@
 """
 High-Performance ONNX Emotion Recognition Engine.
-Provides sub-15ms zero-training facial expression recognition with Russell's Circumplex Valence-Arousal mapping.
+Provides sub-15ms facial expression recognition with Russell's Circumplex Valence-Arousal mapping.
 """
 
 import cv2

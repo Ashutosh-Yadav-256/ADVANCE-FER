@@ -37,7 +37,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">ADVANCE-FER: Production Emotion Recognition</div>', unsafe_allow_html=True)
-st.caption("Zero-training multi-face emotion recognition powered by MediaPipe FaceMesh & Quantized Vision Transformer (ONNX Runtime).")
+st.caption("Multi-face emotion recognition powered by MediaPipe FaceMesh & Quantized Vision Transformer (ONNX Runtime).")
 
 
 @st.cache_resource

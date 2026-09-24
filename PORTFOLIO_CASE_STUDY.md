@@ -7,7 +7,7 @@ This document provides a comprehensive technical case study and resume skill map
 ## 1. Resume Impact Bullet Points (STAR Format)
 
 ### For AI/ML & Computer Vision Roles
-- **Architected and deployed an end-to-end zero-training Affective Computing & Facial Expression Recognition (FER) pipeline**, fusing 468-point 3D MediaPipe facial mesh geometry with a quantized Vision Transformer (ViT) model, achieving sub-15ms inference (~70+ FPS) on standard CPU.
+- **Architected and deployed an end-to-end Affective Computing & Facial Expression Recognition (FER) pipeline**, fusing 468-point 3D MediaPipe facial mesh geometry with a quantized Vision Transformer (ViT) model, achieving sub-15ms inference (~70+ FPS) on standard CPU.
 - **Engineered multi-modal affective telemetries**, calculating discrete 7-class emotion probabilities alongside continuous psychological dimensions (**Valence & Arousal**) mapped onto Russell’s Circumplex Model of Affect.
 - **Eliminated CPU autodiff bottlenecks in live video loops**, replacing real-time Grad-CAM backpropagation with optimized ONNX Runtime graph execution, reducing latency by 92% (from ~450ms to 12ms per frame).
 

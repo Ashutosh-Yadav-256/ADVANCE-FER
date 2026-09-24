@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="ADVANCE-FER Facial Expression Recognition API",
-    description="Production-grade, zero-training SOTA Facial Expression Recognition API powered by MediaPipe and ONNX Runtime.",
+    description="Production-grade SOTA Facial Expression Recognition API powered by MediaPipe and ONNX Runtime.",
     version="2.0.0",
     lifespan=lifespan
 )

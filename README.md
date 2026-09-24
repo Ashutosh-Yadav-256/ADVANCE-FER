@@ -21,7 +21,7 @@
 ## Executive Overview
 
 <div align="justify">
-ADVANCE-FER is an enterprise-grade, zero-training Facial Expression Recognition (FER) microservice and multi-modal Affective AI system engineered for high-throughput production environments. Built upon a fusion of 468-point 3D MediaPipe facial mesh geometry and an optimized, quantized Vision Transformer (ViT) running on ONNX Runtime, the service delivers sub-15ms inference latency (~70+ FPS) on standard CPU hardware without demanding dedicated GPU infrastructure.
+ADVANCE-FER is an enterprise-grade Facial Expression Recognition (FER) microservice and multi-modal Affective AI system engineered for high-throughput production environments. Built upon a fusion of 468-point 3D MediaPipe facial mesh geometry and an optimized, quantized Vision Transformer (ViT) running on ONNX Runtime, the service delivers sub-15ms inference latency (~70+ FPS) on standard CPU hardware without demanding dedicated GPU infrastructure.
 </div>
 
 <br/>
