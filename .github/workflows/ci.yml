@@ -10,17 +10,12 @@ on:
 permissions:
   contents: write
   packages: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # =========================================================================
-  # JOB 1: Backend Testing & Code Quality
-  # =========================================================================
   backend-test:
     name: Backend Test Suite (Pytest & Linters)
     runs-on: ubuntu-latest
@@ -59,45 +54,6 @@ jobs:
         run: |
           python -m pytest tests/ -v -s --durations=10
 
-  # =========================================================================
-  # JOB 2: Build & Deploy Frontend to GitHub Pages
-  # =========================================================================
-  frontend-deploy-pages:
-    name: Build & Deploy Angular UI to GitHub Pages
-    needs: backend-test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install Frontend Dependencies
-        working-directory: frontend
-        run: |
-          npm ci --legacy-peer-deps
-
-      - name: Build Production Angular Bundle with Base Href
-        working-directory: frontend
-        run: |
-          npx ng build --base-href /ADVANCE-FER/
-          cp dist/frontend/browser/index.html dist/frontend/browser/404.html
-
-      - name: Deploy to GitHub Pages (gh-pages branch)
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: frontend/dist/frontend/browser
-          branch: gh-pages
-
-  # =========================================================================
-  # JOB 3: Build & Publish Container to GitHub Container Registry (GHCR)
-  # =========================================================================
   docker-publish:
     name: Build & Publish Docker Container
     needs: backend-test

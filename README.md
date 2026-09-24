@@ -13,7 +13,7 @@
 
 A production-grade, zero-training Facial Expression Recognition (FER) microservice and Affective AI system. Powered by **MediaPipe FaceMesh** for multi-face geometric alignment, an optimized **Vision Transformer (ViT) ONNX Runtime** engine for real-time affective computing, and an autonomous **Affective GenAI Agent** for behavioral insights.
 
-> 📚 **Complete Technical Portfolio & Skills Case Study**: See [PORTFOLIO_CASE_STUDY.md](PORTFOLIO_CASE_STUDY.md) for resume impact bullets, STAR interview talking points, and technical mappings.
+> **Complete Technical Portfolio & Skills Case Study**: See [PORTFOLIO_CASE_STUDY.md](PORTFOLIO_CASE_STUDY.md) for resume impact bullets, STAR interview talking points, and technical mappings.
 
 ---
 
