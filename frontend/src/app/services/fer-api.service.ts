@@ -51,7 +51,7 @@ export interface AgentResponse {
 })
 export class FerApiService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8001';
+  private baseUrl = 'http://localhost:8000';
 
   getHealth(): Observable<HealthResponse> {
     return this.http.get<HealthResponse>(`${this.baseUrl}/healthz`);

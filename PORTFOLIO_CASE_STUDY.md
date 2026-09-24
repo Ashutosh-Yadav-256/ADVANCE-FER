@@ -32,31 +32,31 @@ This document provides a comprehensive technical case study and resume skill map
 
 | Category | Skill | How It Is Implemented in This Codebase | Primary File Link |
 | :--- | :--- | :--- | :--- |
-| **Languages** | **Python** | AsyncIO, type hints, dataclasses, context managers, and generator patterns. | [server.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/api/server.py) |
-| | **SQL** | Relational schemas, indexing, foreign key cascades, and ORM abstractions. | [models.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/database/models.py) |
-| | **C++** | Native compiled C++ execution graph via MediaPipe FaceMesh & ONNX Runtime core. | [face_detector.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/preprocessing/face_detector.py) |
-| | **JavaScript/TS** | REST JSON endpoints and OpenAPI contracts ready for React/Next.js client consumption. | [server.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/api/server.py) |
-| **AI/ML & GenAI** | **Machine Learning** | Facial landmark geometry, affine eye-level transformation, and emotion classification. | [alignment.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/preprocessing/alignment.py) |
-| | **Deep Learning** | Convolutional backbones (ResNet, EfficientNet) and Vision Transformer (ViT). | [fer_model.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/models/fer_model.py) |
-| | **Transformers** | ViT image classification with patch embeddings, attention heads, and softmax heads. | [emotion_engine.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/models/emotion_engine.py) |
-| | **PyTorch** | PyTorch Modules, DataLoader, Custom Dataset, and autograd hooks. | [train.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/train.py) |
-| | **GenAI & LLMs** | Prompt chaining, affective behavioral interpretation, and empathy synthesis. | [affective_agent.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/agent/affective_agent.py) |
-| | **AI Agents** | Autonomous agent observing sensory inputs (face data) and acting on goals (coaching). | [affective_agent.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/agent/affective_agent.py) |
-| | **Hugging Face** | Pre-trained model weight acquisition, tokenizer config, and ONNX model quantization. | [weights_manager.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/models/weights_manager.py) |
-| **Backend** | **FastAPI** | High-throughput asynchronous ASGI microservice with lifespan events and CORS. | [server.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/api/server.py) |
-| | **Flask** | Lightweight WSGI microservice showcasing multi-framework backend adaptability. | [flask_app.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/api/flask_app.py) |
-| | **Pydantic** | Strict V2 schema validation for request payloads and structured API outputs. | [schemas.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/api/schemas.py) |
-| | **NumPy & Pandas** | Tensor transformations, affine warp matrix computations, and probability tables. | [alignment.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/preprocessing/alignment.py) |
-| **Databases** | **PostgreSQL** | Persistent storage of emotion telemetry, session records, and aggregations. | [models.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/database/models.py) |
-| | **Redis** | Perceptual frame hashing (`dHash`) caching and client IP rate limiting. | [redis_client.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/cache/redis_client.py) |
-| **MLOps & DevOps** | **Docker** | Multi-stage, non-root user production image with healthcheck instructions. | [Dockerfile](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/Dockerfile) |
-| | **Kubernetes** | Production Deployment, ClusterIP Service, Horizontal Pod Autoscaler (HPA), Ingress. | [k8s/](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/k8s) |
-| | **Terraform (IaC)** | Declarative AWS infrastructure (VPC, Subnets, ECS Fargate, ALB, RDS, ElastiCache). | [terraform/](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/terraform) |
-| | **CI/CD** | GitHub Actions workflow automating linting, testing, and container builds. | [ci.yml](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/.github/workflows/ci.yml) |
-| | **Model Serving** | High-concurrency ONNX Runtime serving with intra-op thread tuning. | [emotion_engine.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/models/emotion_engine.py) |
-| **Software Eng.** | **Unit Testing** | Comprehensive 20-test automated test suite testing all endpoints, models, and logic. | [tests/](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/tests) |
-| | **Design Patterns** | Singleton (Engine), Factory (Detector), Adapter (Flask/FastAPI), Strategy (LLM/Rule). | [inference.py](file:///c:/Desktop/CODING%20_IS_LIFE/1%20ANTI%20GRAVITY/TASKMANGER/ADVANCE-FER/deployment/inference.py) |
-| | **Agile & Reqs** | Iterative feature delivery, clear acceptance criteria, and production audit docs. | [production_grade_analysis.md](file:///C:/Users/ashut/.gemini/antigravity-ide/brain/51766e01-e14a-4e75-8032-eb37e7323f76/production_grade_analysis.md) |
+| **Languages** | **Python** | AsyncIO, type hints, dataclasses, context managers, and generator patterns. | [api/server.py](api/server.py) |
+| | **SQL** | Relational schemas, indexing, foreign key cascades, and ORM abstractions. | [database/models.py](database/models.py) |
+| | **C++** | Native compiled C++ execution graph via MediaPipe FaceMesh & ONNX Runtime core. | [preprocessing/face_detector.py](preprocessing/face_detector.py) |
+| | **JavaScript/TS** | REST JSON endpoints and OpenAPI contracts ready for React/Next.js client consumption. | [api/server.py](api/server.py) |
+| **AI/ML & GenAI** | **Machine Learning** | Facial landmark geometry, affine eye-level transformation, and emotion classification. | [preprocessing/alignment.py](preprocessing/alignment.py) |
+| | **Deep Learning** | Convolutional backbones (ResNet, EfficientNet) and Vision Transformer (ViT). | [models/fer_model.py](models/fer_model.py) |
+| | **Transformers** | ViT image classification with patch embeddings, attention heads, and softmax heads. | [models/emotion_engine.py](models/emotion_engine.py) |
+| | **PyTorch** | PyTorch Modules, DataLoader, Custom Dataset, and autograd hooks. | [train.py](train.py) |
+| | **GenAI & LLMs** | Prompt chaining, affective behavioral interpretation, and empathy synthesis. | [agent/affective_agent.py](agent/affective_agent.py) |
+| | **AI Agents** | Autonomous agent observing sensory inputs (face data) and acting on goals (coaching). | [agent/affective_agent.py](agent/affective_agent.py) |
+| | **Hugging Face** | Pre-trained model weight acquisition, tokenizer config, and ONNX model quantization. | [models/weights_manager.py](models/weights_manager.py) |
+| **Backend** | **FastAPI** | High-throughput asynchronous ASGI microservice with lifespan events and CORS. | [api/server.py](api/server.py) |
+| | **Flask** | Lightweight WSGI microservice showcasing multi-framework backend adaptability. | [api/flask_app.py](api/flask_app.py) |
+| | **Pydantic** | Strict V2 schema validation for request payloads and structured API outputs. | [api/schemas.py](api/schemas.py) |
+| | **NumPy & Pandas** | Tensor transformations, affine warp matrix computations, and probability tables. | [preprocessing/alignment.py](preprocessing/alignment.py) |
+| **Databases** | **PostgreSQL** | Persistent storage of emotion telemetry, session records, and aggregations. | [database/models.py](database/models.py) |
+| | **Redis** | Perceptual frame hashing (`dHash`) caching and client IP rate limiting. | [cache/redis_client.py](cache/redis_client.py) |
+| **MLOps & DevOps** | **Docker** | Multi-stage, non-root user production image with healthcheck instructions. | [Dockerfile](Dockerfile) |
+| | **Kubernetes** | Production Deployment, ClusterIP Service, Horizontal Pod Autoscaler (HPA), Ingress. | [k8s/](k8s/) |
+| | **Terraform (IaC)** | Declarative AWS infrastructure (VPC, Subnets, ECS Fargate, ALB, RDS, ElastiCache). | [terraform/](terraform/) |
+| | **CI/CD** | GitHub Actions workflow automating linting, testing, and container builds. | [.github/workflows/ci.yml](.github/workflows/ci.yml) |
+| | **Model Serving** | High-concurrency ONNX Runtime serving with intra-op thread tuning. | [models/emotion_engine.py](models/emotion_engine.py) |
+| **Software Eng.** | **Unit Testing** | Comprehensive automated test suite testing all endpoints, models, and logic. | [tests/](tests/) |
+| | **Design Patterns** | Singleton (Engine), Factory (Detector), Adapter (Flask/FastAPI), Strategy (LLM/Rule). | [deployment/inference.py](deployment/inference.py) |
+| | **Agile & Reqs** | Iterative feature delivery, clear acceptance criteria, and production audit diagnostics. | [verify_pipeline.py](verify_pipeline.py) |
 
 ---
 
